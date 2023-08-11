@@ -1,5 +1,5 @@
 import { utils, Wallet } from "zksync-web3";
-import * as ethers from "ethers";
+//import * as ethers from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 
@@ -7,7 +7,10 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   // Private key of the account used to deploy
   const wallet = new Wallet("<WALLET_PRIVATE_KEY>");
   const deployer = new Deployer(hre, wallet);
+
+  // Contract to deploy
   const factoryArtifact = await deployer.loadArtifact("AAFactory");
+  // Contract's dependency: MultiSig contract
   const aaArtifact = await deployer.loadArtifact("TwoUserMultisig");
 
   // Getting the bytecodeHash of the account

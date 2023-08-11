@@ -1,4 +1,4 @@
-# Account abstraction tutorial
+# Account Abstraction tutorial
 
 Code for the "Account abstraction" tutorial from the [zkSync v2 documentation](https://v2-docs.zksync.io/dev/).
 

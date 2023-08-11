@@ -1,6 +1,7 @@
 {
-  "name": "custom-aa-tutorial",
-  "version": "1.0.0",
+  "name": "zksync-aa-custom",
+  "author": {"name": "Jabba ø1", "url": "https://github.com/ja88a"},
+  "version": "1.0.1",
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
