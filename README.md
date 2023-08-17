@@ -1,9 +1,4 @@
-# Account Abstraction tutorial
-
-Code for the "Account abstraction" tutorial from the [zkSync v2 documentation](https://v2-docs.zksync.io/dev/).
-
-You can find a full step-by-step guide to build this project [in this article](https://v2-docs.zksync.io/dev/tutorials/custom-aa-tutorial.html#prerequisite).
-
+# Custom AA on zkSync
 ## Installation and compilation
 
 You need Node.js and Yarn.
@@ -18,6 +13,12 @@ To run the scripts to deploy and execute the contracts, use the `zksync-deploy` 
 
 - `yarn hardhat deploy-zksync --script deploy-factory.ts`: deploys the factory contract
 - `yarn hardhat deploy-zksync --script deploy-multisig.ts`: deploys a multisig wallet and executes a transaction.
+
+# Account Abstraction - zkSync Tutorial
+
+Code for the "Account abstraction" tutorial from the [zkSync v2 documentation](https://v2-docs.zksync.io/dev/).
+
+You can find a full step-by-step guide to build this project [in this article](https://v2-docs.zksync.io/dev/tutorials/custom-aa-tutorial.html#prerequisite).
 
 ## Support
 
