@@ -26,17 +26,13 @@ const zkSyncTestnet =
         ],
       }
     : {
-        url: "https://zksync2-testnet.zksync.dev",
+        url: process.env.ZKSYNC_TESTNET_URL,
         ethNetwork: "goerli",
         zksync: true,
         accounts: [
           // account PKs loaded from .env file
-          process.env.DEPLOY_PRIVATE_KEY
-            ? process.env.DEPLOY_PRIVATE_KEY
-            : "env.DEPLOY_PK undefined",
-          process.env.USER_PRIVATE_KEY
-            ? process.env.USER_PRIVATE_KEY
-            : "env.USER_PK undefined",
+          process.env.DEPLOY_PRIVATE_KEY || "",
+          process.env.USER_PRIVATE_KEY || "",
         ],
         // contract verification endpoint
         verifyURL:

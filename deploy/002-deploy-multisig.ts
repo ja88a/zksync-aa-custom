@@ -2,13 +2,20 @@ import { utils, Wallet, Provider, EIP712Signer, types } from "zksync-web3";
 import * as ethers from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-// Put the address of your AA factory
+import { config as dotenvConfig } from "dotenv";
+import { resolve } from "path";
+
+const dotenvConfigPath: string = process.env.DOTENV_CONFIG_PATH || "./.env";
+dotenvConfig({ path: resolve(__dirname, dotenvConfigPath) });
+
+// Address of your AA factory
 const AA_FACTORY_ADDRESS = "<FACTORY-ADDRESS>";
 
 export default async function (hre: HardhatRuntimeEnvironment) {
-  const provider = new Provider("https://testnet.era.zksync.dev");
-  // Private key of the account used to deploy
-  const wallet = new Wallet("<WALLET-PRIVATE-KEY>").connect(provider);
+  const provider = new Provider(process.env.ZKSYNC_TESTNET_URL);
+  
+  // AAFactory integration
+  const wallet = new Wallet(process.env.DEPLOY_PRIVATE_KEY || '').connect(provider);
   const factoryArtifact = await hre.artifacts.readArtifact("AAFactory");
 
   const aaFactory = new ethers.Contract(
@@ -18,13 +25,13 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   );
 
   // The two owners of the multisig
-  const owner1 = Wallet.createRandom();
-  const owner2 = Wallet.createRandom();
+  const owner1 = new Wallet(process.env.OWNER1_PRIVATE_KEY || ''); // Wallet.createRandom()
+  const owner2 = new Wallet(process.env.OWNER2_PRIVATE_KEY || ''); // Wallet.createRandom()
 
   // For the simplicity of the tutorial, we will use zero hash as salt
   const salt = ethers.constants.HashZero;
 
-  // deploy account owned by owner1 & owner2
+  // Deploy account owned by owner1 & owner2
   const tx = await aaFactory.deployAccount(
     salt,
     owner1.address,
@@ -40,14 +47,15 @@ export default async function (hre: HardhatRuntimeEnvironment) {
     salt,
     abiCoder.encode(["address", "address"], [owner1.address, owner2.address])
   );
-  console.log(`Multisig account deployed on address ${multisigAddress}`);
+  console.log(`Multisig account deployed on address ${multisigAddress}\n\towner1: ${owner1.address}\n\towner2: ${owner2.address}`);
 
   console.log("Sending funds to multisig account");
+
   // Send funds to the multisig account we just deployed
   await (
     await wallet.sendTransaction({
       to: multisigAddress,
-      // You can increase the amount of ETH sent to the multisig
+      // Amount of ETH to send to the multisig
       value: ethers.utils.parseEther("0.008"),
     })
   ).wait();

@@ -3,9 +3,15 @@ import { utils, Wallet } from "zksync-web3";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
 
+import { config as dotenvConfig } from "dotenv";
+import { resolve } from "path";
+
+const dotenvConfigPath: string = process.env.DOTENV_CONFIG_PATH || "./.env";
+dotenvConfig({ path: resolve(__dirname, dotenvConfigPath) });
+
 export default async function (hre: HardhatRuntimeEnvironment) {
   // Private key of the account used to deploy
-  const wallet = new Wallet("<WALLET_PRIVATE_KEY>");
+  const wallet = new Wallet(process.env.DEPLOY_PRIVATE_KEY || '');
   const deployer = new Deployer(hre, wallet);
 
   // Contract to deploy
