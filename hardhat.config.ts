@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 
 import "@matterlabs/hardhat-zksync-deploy";
 import "@matterlabs/hardhat-zksync-solc";
+import "@matterlabs/hardhat-zksync-verify";
 
 import { config as dotenvConfig } from "dotenv";
 import { resolve } from "path";
@@ -52,6 +53,9 @@ const config: HardhatUserConfig = {
       zksync: true,
     },
     zkSyncTestnet,
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY //<Your API key for Etherscan>
   },
   solidity: {
     version: "0.8.17",

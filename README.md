@@ -3,9 +3,9 @@
 
 You need Node.js and Yarn.
 
-Install all dependencies with `yarn`.
+Install all dependencies with `pnpm install` or `yarn`.
 
-Compile contracts with `yarn hardhat compile`
+Compile all contracts with `yarn hardhat compile`
 
 ## Deployment and usage
 
