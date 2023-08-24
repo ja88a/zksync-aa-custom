@@ -8,28 +8,28 @@ import { resolve } from "path";
 const dotenvConfigPath: string = process.env.DOTENV_CONFIG_PATH || "./.env";
 dotenvConfig({ path: resolve(__dirname, dotenvConfigPath) });
 
-// Address of your AA factory
-const AA_FACTORY_ADDRESS = "<FACTORY-ADDRESS>";
 
 export default async function (hre: HardhatRuntimeEnvironment) {
   const provider = new Provider(process.env.ZKSYNC_TESTNET_URL);
-  
+
   // AAFactory integration
-  const wallet = new Wallet(process.env.DEPLOY_PRIVATE_KEY || '').connect(provider);
+  const wallet = new Wallet(process.env.DEPLOY_PRIVATE_KEY || "").connect(
+    provider
+  );
   const factoryArtifact = await hre.artifacts.readArtifact("AAFactory");
 
   const aaFactory = new ethers.Contract(
-    AA_FACTORY_ADDRESS,
+    process.env.AA_FACTORY_ADDRESS || "", // Address of your AA factory
     factoryArtifact.abi,
     wallet
   );
 
   // The two owners of the multisig
-  const owner1 = new Wallet(process.env.OWNER1_PRIVATE_KEY || ''); // Wallet.createRandom()
-  const owner2 = new Wallet(process.env.OWNER2_PRIVATE_KEY || ''); // Wallet.createRandom()
+  const owner1 = new Wallet(process.env.OWNER1_PRIVATE_KEY || ""); // Wallet.createRandom()
+  const owner2 = new Wallet(process.env.OWNER2_PRIVATE_KEY || ""); // Wallet.createRandom()
 
-  // For the simplicity of the tutorial, we will use zero hash as salt
-  const salt = ethers.constants.HashZero;
+  // Use a zero hash as salt
+  const salt = ethers.constants.HashZero; // FIXME review SALT value for prod deployment
 
   // Deploy account owned by owner1 & owner2
   const tx = await aaFactory.deployAccount(
@@ -39,15 +39,17 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   );
   await tx.wait();
 
-  // Getting the address of the deployed contract account
+  // Getting the contract address of the deployed AAccount
   const abiCoder = new ethers.utils.AbiCoder();
   const multisigAddress = utils.create2Address(
-    AA_FACTORY_ADDRESS,
+    aaFactory.address, // AA_FACTORY_ADDRESS,
     await aaFactory.aaBytecodeHash(),
     salt,
     abiCoder.encode(["address", "address"], [owner1.address, owner2.address])
   );
-  console.log(`Multisig account deployed on address ${multisigAddress}\n\towner1: ${owner1.address}\n\towner2: ${owner2.address}`);
+  console.log(
+    `Multisig account deployed on address ${multisigAddress}\n\towner1: ${owner1.address}\n\towner2: ${owner2.address}`
+  );
 
   console.log("Sending funds to multisig account");
 
@@ -56,20 +58,28 @@ export default async function (hre: HardhatRuntimeEnvironment) {
     await wallet.sendTransaction({
       to: multisigAddress,
       // Amount of ETH to send to the multisig
-      value: ethers.utils.parseEther("0.008"),
+      value: ethers.utils.parseEther("0.005"),
     })
   ).wait();
 
   let multisigBalance = await provider.getBalance(multisigAddress);
 
-  console.log(`Multisig account balance is ${multisigBalance.toString()}`);
+  console.log(
+    `Multisig account balance: ${ethers.utils.formatUnits(
+      multisigBalance,
+      18
+    )} ETH`
+  ); // multisigBalance.toString()
 
-  // Transaction to deploy a new account using the multisig we just deployed
+  const owner1Multisig2 = Wallet.createRandom();
+  const owner2Multisig2 = Wallet.createRandom();
+
+  // Transaction to deploy a new account using the just deployed multisig
   let aaTx = await aaFactory.populateTransaction.deployAccount(
     salt,
     // These are accounts that will own the newly deployed account
-    Wallet.createRandom().address,
-    Wallet.createRandom().address
+    owner1Multisig2.address,
+    owner2Multisig2.address
   );
 
   const gasLimit = await provider.estimateGas(aaTx);
@@ -108,6 +118,7 @@ export default async function (hre: HardhatRuntimeEnvironment) {
       multisigAddress
     )}`
   );
+
   const sentTx = await provider.sendTransaction(utils.serialize(aaTx));
   await sentTx.wait();
 
@@ -120,5 +131,10 @@ export default async function (hre: HardhatRuntimeEnvironment) {
 
   multisigBalance = await provider.getBalance(multisigAddress);
 
-  console.log(`Multisig account balance is now ${multisigBalance.toString()}`);
+  console.log(
+    `Multisig account balance is now: ${ethers.utils.formatUnits(
+      multisigBalance,
+      18
+    )} ETH`
+  );
 }
