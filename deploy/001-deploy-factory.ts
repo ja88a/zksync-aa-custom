@@ -16,6 +16,7 @@ export default async function (hre: HardhatRuntimeEnvironment) {
 
   // Contract to deploy
   const factoryArtifact = await deployer.loadArtifact("AAFactory");
+  
   // Contract's dependency: MultiSig contract
   const aaArtifact = await deployer.loadArtifact("TwoUserMultisig");
 
@@ -33,5 +34,6 @@ export default async function (hre: HardhatRuntimeEnvironment) {
     ]
   );
 
-  console.log(`AA factory address: ${factory.address}`);
+  let aaArtifactHashHex = Buffer.from(bytecodeHash).toString('hex');
+  console.log(`AA factory address: ${factory.address}\n\tArtifact BytecodeHash: 0x${aaArtifactHashHex}`);
 }
