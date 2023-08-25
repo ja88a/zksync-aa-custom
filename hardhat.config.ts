@@ -1,8 +1,9 @@
-import { HardhatUserConfig } from "hardhat/config";
-
 import "@matterlabs/hardhat-zksync-deploy";
 import "@matterlabs/hardhat-zksync-solc";
+import "@matterlabs/hardhat-zksync-upgradable";
 import "@matterlabs/hardhat-zksync-verify";
+
+import { HardhatUserConfig } from "hardhat/config";
 
 import { config as dotenvConfig } from "dotenv";
 import { resolve } from "path";
@@ -53,6 +54,12 @@ const config: HardhatUserConfig = {
       zksync: true,
     },
     zkSyncTestnet,
+    zkSyncLocal: {
+      // you should run the "matter-labs/local-setup" first
+      url: "http://localhost:3050",
+      ethNetwork: "http://localhost:8545",
+      zksync: true,
+    },
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY //<Your API key for Etherscan>

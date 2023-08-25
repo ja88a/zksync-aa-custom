@@ -1,4 +1,4 @@
-import { utils, Wallet, Provider, EIP712Signer, types } from "zksync-web3";
+import { utils, Wallet, Provider, EIP712Signer, types, Contract } from "zksync-web3";
 import * as ethers from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
@@ -10,10 +10,10 @@ dotenvConfig({ path: resolve(__dirname, dotenvConfigPath) });
 
 
 export default async function (hre: HardhatRuntimeEnvironment) {
-  const provider = new Provider(process.env.ZKSYNC_TESTNET_URL);
+  const provider: Provider = new Provider(process.env.ZKSYNC_TESTNET_URL);
 
   // AAFactory integration
-  const wallet = new Wallet(process.env.DEPLOY_PRIVATE_KEY || "").connect(
+  const deployerWallet: Wallet = new Wallet(process.env.DEPLOY_PRIVATE_KEY || "").connect(
     provider
   );
   const factoryArtifact = await hre.artifacts.readArtifact("AAFactory");
@@ -21,17 +21,17 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   const aaFactory = new ethers.Contract(
     process.env.AA_FACTORY_ADDRESS || "", // Address of your AA factory
     factoryArtifact.abi,
-    wallet
+    deployerWallet
   );
 
   // The two owners of the multisig
-  const owner1 = new Wallet(process.env.OWNER1_PRIVATE_KEY || ""); // Wallet.createRandom()
-  const owner2 = new Wallet(process.env.OWNER2_PRIVATE_KEY || ""); // Wallet.createRandom()
+  const owner1: Wallet = new Wallet(process.env.OWNER1_PRIVATE_KEY || ""); // Wallet.createRandom()
+  const owner2: Wallet = new Wallet(process.env.OWNER2_PRIVATE_KEY || ""); // Wallet.createRandom()
 
   // Use a zero hash as salt
   const salt = ethers.constants.HashZero; // FIXME review SALT value for prod deployment
 
-  // Deploy account owned by owner1 & owner2
+  // 1. Deploy an Account owned by owner1 & owner2
   const tx = await aaFactory.deployAccount(
     salt,
     owner1.address,
@@ -39,42 +39,53 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   );
   await tx.wait();
 
-  // Getting the contract address of the deployed AAccount
+  // const factoryProxy: Contract = await hre.zkUpgrades.deployProxy(deployerWallet.zkWallet, factoryArtifact, [bytecodeHash], {
+  //   initializer: "store",
+  //   kind: "uups" // "transparent",
+  // });
+
+  //
+  // 2. Create an AA multisig contract from its already deployed Factory
+
   const abiCoder = new ethers.utils.AbiCoder();
-  const multisigAddress = utils.create2Address(
+  const multisigAddress: string = utils.create2Address(
     aaFactory.address, // AA_FACTORY_ADDRESS,
     await aaFactory.aaBytecodeHash(),
     salt,
     abiCoder.encode(["address", "address"], [owner1.address, owner2.address])
   );
-  console.log(
+  console.info(
     `Multisig account deployed on address ${multisigAddress}\n\towner1: ${owner1.address}\n\towner2: ${owner2.address}`
   );
 
+  //
+  // 3. Send funds to the multisig account we just deployed
+
   console.log("Sending funds to multisig account");
 
-  // Send funds to the multisig account we just deployed
   await (
-    await wallet.sendTransaction({
+    await deployerWallet.sendTransaction({
       to: multisigAddress,
       // Amount of ETH to send to the multisig
       value: ethers.utils.parseEther("0.005"),
     })
   ).wait();
 
-  let multisigBalance = await provider.getBalance(multisigAddress);
+  let multisigBalance: ethers.BigNumber = await provider.getBalance(multisigAddress);
 
-  console.log(
+  console.info(
     `Multisig account balance: ${ethers.utils.formatUnits(
       multisigBalance,
       18
     )} ETH`
   ); // multisigBalance.toString()
+  
+  //
+  // 4. Deploy a new Account using the just deployed multisig
 
-  const owner1Multisig2 = Wallet.createRandom();
-  const owner2Multisig2 = Wallet.createRandom();
+  const owner1Multisig2: Wallet = Wallet.createRandom();
+  const owner2Multisig2: Wallet = Wallet.createRandom();
 
-  // Transaction to deploy a new account using the just deployed multisig
   let aaTx = await aaFactory.populateTransaction.deployAccount(
     salt,
     // These are accounts that will own the newly deployed account
@@ -99,6 +110,10 @@ export default async function (hre: HardhatRuntimeEnvironment) {
     } as types.Eip712Meta,
     value: ethers.BigNumber.from(0),
   };
+
+  //
+  // 4b. Sign the Transaction & send it
+
   const signedTxHash = EIP712Signer.getSignedDigest(aaTx);
 
   const signature = ethers.utils.concat([
@@ -119,9 +134,9 @@ export default async function (hre: HardhatRuntimeEnvironment) {
     )}`
   );
 
-  const sentTx = await provider.sendTransaction(utils.serialize(aaTx));
-  await sentTx.wait();
-
+  const txResponse = await provider.sendTransaction(utils.serialize(aaTx));
+  const txReceipt = await txResponse.wait();
+  
   // Checking that the nonce for the account has increased
   console.log(
     `The multisig's nonce after the first tx is ${await provider.getTransactionCount(
