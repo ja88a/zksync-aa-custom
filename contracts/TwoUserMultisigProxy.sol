@@ -14,7 +14,18 @@ import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
 // to call non-view method of system contracts
 import "@matterlabs/zksync-contracts/l2/system-contracts/libraries/SystemContractsCaller.sol";
 
-contract TwoUserMultisig is IAccount, IERC1271 {
+// Used for upgradability via an UUPS proxy
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+
+contract TwoUserMultisig is 
+    IAccount,
+    IERC1271, 
+    Initializable, 
+    UUPSUpgradeable, 
+    OwnableUpgradeable  {
+
     // to get transaction hash
     using TransactionHelper for Transaction;
 
@@ -246,4 +257,6 @@ contract TwoUserMultisig is IAccount, IERC1271 {
         // If the contract is called directly, behave like an EOA.
         // Note, that is okay if the bootloader sends funds with no calldata as it may be used for refunds/operator payments
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
