@@ -6,9 +6,11 @@ Experiment the support for Account abstraction on zkSync (v2, Era).
 
 Initial: 
 
-1. Create/Deploy a factory contract for creating AAccounts
-2. Create an AAccount
-3. Use the AAcount to create/deploy a 2:2 multisig contract
+1. Create a factory contract for deploying AAccounts
+2. Create a MultiSig 2:2 owned by the 2 AAccount owners
+3. Use the AAMultiSig contract to deploy another Account
+4. Apply the UUPS proxy pattern to the MultiSig contract
+
 
 ## Features
 

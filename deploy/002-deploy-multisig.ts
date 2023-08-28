@@ -31,7 +31,9 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   // Use a zero hash as salt
   const salt = ethers.constants.HashZero; // FIXME review SALT value for prod deployment
 
-  // 1. Deploy an Account owned by owner1 & owner2
+  //
+  // 1. Create an AAccount owned by owner1 & owner2
+
   const tx = await aaFactory.deployAccount(
     salt,
     owner1.address,
@@ -45,7 +47,7 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   // });
 
   //
-  // 2. Create an AA multisig contract from its already deployed Factory
+  // 2. Create a multisig contract from its already deployed Factory
 
   const abiCoder = new ethers.utils.AbiCoder();
   const multisigAddress: string = utils.create2Address(
@@ -112,7 +114,7 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   };
 
   //
-  // 4b. Sign the Transaction & send it
+  // 4b. Sign the Transaction & Send it
 
   const signedTxHash = EIP712Signer.getSignedDigest(aaTx);
 
